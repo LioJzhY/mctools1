@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MC（Minecraft）指令生成器 · 小白也能用</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2379553a'/%3E%3Crect width='16' height='6' fill='%236aa84f'/%3E%3Crect width='16' height='2' fill='%239ccc6a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://miaoda.feishu.cn">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --grass:#6aa84f; --grass-hi:#8fcc63; --grass-dk:#46752f;
+  --dirt:#79553a; --dirt-dk:#543826;
+  --stone:#525252; --stone-hi:#6e6e6e; --stone-dk:#3a3a3a;
+  --bg:#262626; --panel:#3d3d3d; --panel-dk:#303030;
+  --ink:#1a1a1a; --text:#e8e8e8; --dim:#b5b5b5;
+  --green:#5dff5d; --yellow:#ffe95a; --aqua:#5ee8e8; --red:#ff6b5e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  color:var(--text); line-height:1.6; min-height:100vh; padding:18px 14px 40px;
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 2px,transparent 2px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 2px,transparent 2px),
+    linear-gradient(rgba(0,0,0,.18) 2px,transparent 2px),
+    linear-gradient(90deg,rgba(0,0,0,.18) 2px,transparent 2px);
+  background-size:48px 48px,48px 48px,16px 16px,16px 16px;
+  background-position:-2px -2px,-2px -2px,-1px -1px,-1px -1px;
+}
+.wrap{max-width:1060px;margin:0 auto}
+
+/* ===== 顶部标题 ===== */
+header{
+  position:relative;
+  border:3px solid var(--ink);
+  background:linear-gradient(180deg,var(--grass-hi) 0%,var(--grass) 38%,var(--grass-dk) 39%,var(--dirt) 100%);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.35),inset 0 -4px 0 rgba(0,0,0,.35),0 6px 0 rgba(0,0,0,.4);
+  padding:20px 18px 16px;text-align:center;margin-bottom:20px;
+}
+.back-btn{
+  position:absolute;top:10px;left:10px;
+  font-family:inherit;font-size:13px;font-weight:900;color:#fff;cursor:pointer;
+  background:rgba(0,0,0,.35);border:2px solid rgba(0,0,0,.4);padding:7px 12px;
+  text-shadow:1px 1px 0 rgba(0,0,0,.6);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.15),inset -2px -2px 0 rgba(0,0,0,.35);
+}
+.back-btn:hover{background:rgba(0,0,0,.55)}
+.back-btn:active{transform:translate(1px,1px)}
+header .en{font-family:"Press Start 2P",monospace;font-size:clamp(13px,2.6vw,22px);color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.55);letter-spacing:1px}
+header h1{font-size:clamp(19px,3.6vw,28px);font-weight:900;color:#fff;margin-top:10px;text-shadow:2px 2px 0 rgba(0,0,0,.5)}
+header p{margin-top:8px;font-size:13px;color:#f2f2e6;text-shadow:1px 1px 0 rgba(0,0,0,.45)}
+
+/* ===== 布局 ===== */
+.app{display:grid;grid-template-columns:196px 1fr;gap:16px;align-items:start}
+@media(max-width:780px){.app{grid-template-columns:1fr}}
+
+/* ===== 左侧功能栏 ===== */
+.nav{display:flex;flex-direction:column;gap:7px}
+@media(max-width:780px){.nav{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}}
+.nav-btn{
+  font-family:inherit;font-size:14px;font-weight:700;color:#fff;text-align:left;
+  padding:10px 12px;cursor:pointer;background:var(--stone);
+  border:2px solid var(--ink);text-shadow:1px 1px 0 rgba(0,0,0,.5);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.18),inset -2px -2px 0 rgba(0,0,0,.4);
+}
+@media(max-width:780px){.nav-btn{text-align:center;font-size:13px;padding:9px 6px}}
+.nav-btn:hover{background:var(--stone-hi)}
+.nav-btn:active{box-shadow:inset -2px -2px 0 rgba(255,255,255,.15),inset 2px 2px 0 rgba(0,0,0,.4);transform:translate(1px,1px)}
+.nav-btn.active{background:var(--grass);box-shadow:inset 2px 2px 0 rgba(255,255,255,.3),inset -2px -2px 0 rgba(0,0,0,.4)}
+.nav-btn .n{font-family:"Press Start 2P",monospace;font-size:9px;opacity:.75;margin-right:8px}
+
+/* ===== 卡片 ===== */
+.card{
+  background:var(--panel);border:3px solid var(--ink);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.1),inset 0 -3px 0 rgba(0,0,0,.35),0 5px 0 rgba(0,0,0,.35);
+  padding:18px 16px;margin-bottom:16px;
+}
+.card h2{font-size:18px;font-weight:900;color:#fff;margin-bottom:4px;display:flex;align-items:baseline;gap:10px}
+.card h2 .tag{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--green)}
+.card .desc{font-size:13px;color:var(--dim);margin-bottom:14px}
+
+/* ===== 表单 ===== */
+.field{margin-bottom:14px}
+.field>label{display:block;font-size:14px;font-weight:700;margin-bottom:5px;color:#fff}
+.hint{font-size:12px;color:var(--dim);font-weight:400;margin-left:6px}
+input[type=text],input[type=number],select,textarea{
+  width:100%;font-family:inherit;font-size:15px;color:#fff;background:var(--panel-dk);
+  border:2px solid var(--ink);padding:9px 10px;
+  box-shadow:inset 2px 2px 0 rgba(0,0,0,.5);
+}
+textarea{min-height:64px;resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--grass-hi);outline-offset:1px}
+select{cursor:pointer;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--grass-hi) 50%),linear-gradient(135deg,var(--grass-hi) 50%,transparent 50%);background-position:calc(100% - 16px) 16px,calc(100% - 11px) 16px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+.check-field{display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;background:var(--panel-dk);border:2px solid var(--ink);margin-bottom:8px;font-size:14px;font-weight:700}
+.check-field input{width:18px;height:18px;accent-color:var(--grass);flex:none;cursor:pointer}
+.check-field .sub{font-weight:400;color:var(--dim);font-size:12px}
+
+/* 附魔动态行 */
+.ench-row{display:grid;grid-template-columns:1fr 78px 40px;gap:8px;margin-bottom:8px;align-items:center}
+@media(max-width:420px){.ench-row{grid-template-columns:1fr 70px 38px}}
+.mini-btn{
+  font-family:inherit;font-weight:900;color:#fff;cursor:pointer;background:var(--stone);
+  border:2px solid var(--ink);padding:8px 0;text-shadow:1px 1px 0 rgba(0,0,0,.5);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.2),inset -2px -2px 0 rgba(0,0,0,.4);
+}
+.mini-btn:hover{background:var(--stone-hi)}
+.mini-btn.red{background:#a23a32}
+.mini-btn.red:hover{background:#c0473e}
+
+/* ===== 主按钮 ===== */
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.big-btn{
+  font-family:inherit;font-size:15px;font-weight:900;color:#fff;padding:12px 22px;cursor:pointer;
+  border:2px solid var(--ink);text-shadow:2px 2px 0 rgba(0,0,0,.5);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.35),inset -2px -2px 0 rgba(0,0,0,.4);
+}
+.big-btn:active{transform:translate(1px,1px);box-shadow:inset -2px -2px 0 rgba(255,255,255,.2),inset 2px 2px 0 rgba(0,0,0,.4)}
+.big-btn.gen{background:var(--grass)}
+.big-btn.gen:hover{background:var(--grass-hi)}
+.big-btn.copy{background:#3f7fc4}
+.big-btn.copy:hover{background:#4d92d8}
+
+/* ===== 结果区 ===== */
+.result-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.result-head h2{margin:0}
+.result-box{
+  background:#141414;border:2px solid var(--ink);padding:14px 12px;min-height:74px;
+  box-shadow:inset 2px 2px 0 rgba(0,0,0,.6);
+  font-family:"Press Start 2P",ui-monospace,Menlo,Consolas,monospace;
+  font-size:11px;line-height:2;color:var(--green);word-break:break-all;white-space:pre-wrap;
+}
+.result-box .empty{color:#777;font-family:inherit;font-size:11px}
+.result-box .cmt{color:var(--yellow)}
+.toast{
+  position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);
+  background:var(--grass);color:#fff;font-weight:900;font-size:14px;padding:12px 22px;
+  border:2px solid var(--ink);text-shadow:1px 1px 0 rgba(0,0,0,.5);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.3),inset -2px -2px 0 rgba(0,0,0,.4),0 6px 0 rgba(0,0,0,.4);
+  opacity:0;pointer-events:none;transition:all .18s;z-index:99;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{text-align:center;color:#888;font-size:12px;margin-top:22px}
+footer b{color:var(--green)}
+
+/* ===== 友情链接 ===== */
+.links{margin-top:26px;padding:0}
+.links h2{font-size:17px;font-weight:900;color:#fff;margin-bottom:4px;display:flex;align-items:baseline;gap:10px}
+.links h2 .tag{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--aqua)}
+.links .desc{font-size:12px;color:var(--dim);margin-bottom:12px}
+.links-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:700px){.links-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:430px){.links-grid{grid-template-columns:1fr}}
+.link-card{
+  display:block;text-decoration:none;background:var(--panel);border:2px solid var(--ink);
+  padding:12px 14px;color:var(--text);
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.08),inset -2px -2px 0 rgba(0,0,0,.35);
+}
+.link-card:hover{background:var(--panel-dk);outline:2px solid var(--aqua);outline-offset:-2px}
+.link-card .t{font-weight:900;font-size:14px;color:#fff}
+.link-card .t::after{content:"↗";color:var(--aqua);font-size:12px;margin-left:6px}
+.link-card .d{font-size:12px;color:var(--dim);margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+<button onclick="window.open('https://liojzhy.pages.dev/','_blank')">← 返回</button>
+    <div class="en">MINECRAFT COMMAND MAKER</div>
+    <h1>MC 指令生成器</h1>
+    <p>不用懂代码，点一点、填一填，自动生成指令，复制后粘贴进游戏聊天框即可（<span id="verLabel">Java 1.21 最新版</span>）</p>
+  </header>
+
+  <div class="card">
+    <h2><span class="tag">VERSION</span>选择版本</h2>
+    <div class="desc">先选 Java 版 / 基岩版，再选具体版本。不同版本指令写法有差异，选对版本生成的指令直接能用</div>
+    <div class="row2">
+      <div class="field">
+        <label>版本类型</label>
+        <select id="verFamily">
+          <option value="je">Java 版（JE，电脑版）</option>
+          <option value="be">基岩版（BE，手机/主机）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>具体版本</label>
+        <select id="verVersion"></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+    <nav class="nav" id="nav"></nav>
+    <div class="main-col">
+      <div class="card" id="formCard"></div>
+      <div class="card">
+        <div class="result-head">
+          <h2><span class="tag">OUTPUT</span>生成的指令</h2>
+          <button class="big-btn copy" id="copyBtn" style="padding:9px 16px;font-size:13px">复制指令</button>
+        </div>
+        <div class="result-box" id="result"><span class="empty">// 填好上面的内容，点「生成指令」</span></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>使用方法：游戏中按 <b>T</b> 打开聊天框 → Ctrl+V 粘贴 → 回车执行（单机需在创建世界时开启「允许作弊」）</footer>
+
+  <section class="links">
+    <h2><span class="tag">LINKS</span>友情链接</h2>
+    <div class="desc">我的世界相关网站，点击打开</div>
+    <div class="links-grid">
+      <a class="link-card" href="https://www.minecraft.net/zh-hans" target="_blank" rel="noopener">
+        <span class="t">Minecraft 官网</span>
+        <span class="d">游戏官方主页，下载与资讯</span>
+      </a>
+      <a class="link-card" href="https://zh.minecraft.wiki/" target="_blank" rel="noopener">
+        <span class="t">中文 Minecraft Wiki</span>
+        <span class="d">查方块、物品、指令详细资料</span>
+      </a>
+      <a class="link-card" href="https://www.mcmod.cn/" target="_blank" rel="noopener">
+        <span class="t">MC百科</span>
+        <span class="d">模组、整合包中文资料站</span>
+      </a>
+ <a class="link-card" href="https://www.mcbbs.co/" target="_blank" rel="noopener">
+    <div class="row1">
+        <span class="t">MCBBS</span>
+        <span class="d">国内经典 MC 论坛社区（纪念版）</span>
+    </div>
+</a>
+      <a class="link-card" href="https://klpbbs.com/" target="_blank" rel="noopener">
+        <span class="t">苦力怕论坛</span>
+        <span class="d">教程、资源、基岩版交流</span>
+      </a>
+      <a class="link-card" href="https://mctools.liojzhy.pages.dev/" target="_blank" rel="noopener">
+        <span class="t">主线路</span>
+        <span class="d">卡顿时可用</span>
+      </a>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ===== 数据清单（供输入框联想） ===== -->
+<datalist id="dl-items"></datalist>
+<datalist id="dl-entities"></datalist>
+<datalist id="dl-blocks"></datalist>
+
+<script>
+/* ============ 基础数据 ============ */
+const ITEMS = [
+ ["钻石剑","diamond_sword"],["钻石镐","diamond_pickaxe"],["钻石斧","diamond_axe"],["钻石铲","diamond_shovel"],["钻石锄","diamond_hoe"],
+ ["钻石头盔","diamond_helmet"],["钻石胸甲","diamond_chestplate"],["钻石护腿","diamond_leggings"],["钻石靴子","diamond_boots"],
+ ["下界合金剑","netherite_sword"],["下界合金镐","netherite_pickaxe"],["下界合金头盔","netherite_helmet"],
+ ["弓","bow"],["弩","crossbow"],["三叉戟","trident"],["盾牌","shield"],["钓鱼竿","fishing_rod"],
+ ["金苹果","golden_apple"],["附魔金苹果","enchanted_golden_apple"],["蛋糕","cake"],["钻石","diamond"],["铁锭","iron_ingot"],
+ ["金锭","gold_ingot"],["绿宝石","emerald"],["末影珍珠","ender_pearl"],["末影之眼","ender_eye"],["经验瓶","experience_bottle"],
+ ["TNT","tnt"],["命令方块","command_block"],["屏障","barrier"],["结构方块","structure_block"],["末地水晶","end_crystal"],
+ ["烟花火箭","firework_rocket"],["紫色潜影盒","purple_shulker_box"],["龙息","dragon_breath"],["火把","torch"],
+ ["橡木船","oak_boat"],["矿车","minecart"],["鞍","saddle"],["命名牌","name_tag"],["鞘翅","elytra"],[" totem_of_undying","totem_of_undying"]
+];
+const ENTITIES = [
+ ["僵尸","zombie"],["骷髅(小白)","skeleton"],["苦力怕","creeper"],["蜘蛛","spider"],["末影人","enderman"],["女巫","witch"],
+ ["凋灵骷髅","wither_skeleton"],["僵尸猪灵","zombified_piglin"],["猪灵","piglin"],["烈焰人","blaze"],["恶魂","ghast"],["史莱姆","slime"],
+ ["岩浆怪","magma_cube"],["末影龙","ender_dragon"],["凋灵","wither"],["铁傀儡","iron_golem"],["雪傀儡","snow_golem"],
+ ["狼","wolf"],["猫","cat"],["马","horse"],["驴","donkey"],["村民","villager"],["羊","sheep"],["猪","pig"],["牛","cow"],
+ ["鸡","chicken"],["蜜蜂","bee"],["狐狸","fox"],["熊猫","panda"],["掠夺者","pillager"],["卫道士","vindicator"],["唤魔者","evoker"],
+ ["劫掠兽","ravager"],["守卫者","guardian"],["潜影贝","shulker"],["鱿鱼","squid"],["发光鱿鱼","glow_squid"],["海龟","turtle"],
+ ["海豚","dolphin"],["北极熊","polar_bear"],["羊驼","llama"],["鹦鹉","parrot"],["兔子","rabbit"],["青蛙","frog"],["蝙蝠","bat"]
+];
+const BLOCKS = [
+ ["石头","stone"],["花岗岩","granite"],["闪长岩","diorite"],["安山岩","andesite"],["泥土","dirt"],["草方块","grass_block"],
+ ["沙子","sand"],["沙砾","gravel"],["橡木木板","oak_planks"],["圆石","cobblestone"],["玻璃","glass"],["铁块","iron_block"],
+ ["金块","gold_block"],["钻石块","diamond_block"],["绿宝石块","emerald_block"],["红砖块","bricks"],["书架","bookshelf"],
+ ["苔石","mossy_cobblestone"],["黑曜石","obsidian"],["萤石","glowstone"],["海晶灯","sea_lantern"],["TNT","tnt"],
+ ["南瓜","pumpkin"],["雪块","snow_block"],["冰","ice"],["蓝冰","blue_ice"],["岩浆块","magma_block"],["石英块","quartz_block"],
+ ["紫珀块","purpur_block"],["末地石","end_stone"],["空气(清除)","air"],["命令方块","command_block"],["光源方块","light"],
+ ["白色混凝土","white_concrete"],["蓝色混凝土","blue_concrete"],["红色混凝土","red_concrete"],["黄色混凝土","yellow_concrete"]
+];
+const ENCHS = [
+ ["锋利","sharpness"],["亡灵杀手","smite"],["节肢杀手","bane_of_arthropods"],["击退","knockback"],["火焰附加","fire_aspect"],
+ ["抢夺","looting"],["横扫之刃","sweeping_edge"],["保护","protection"],["火焰保护","fire_protection"],["爆炸保护","blast_protection"],
+ ["弹射物保护","projectile_protection"],["荆棘","thorns"],["耐久","unbreaking"],["经验修补","mending"],["效率","efficiency"],
+ ["精准采集","silk_touch"],["时运","fortune"],["力量","power"],["冲击","punch"],["火矢","flame"],["无限","infinity"],
+ ["海之眷顾","luck_of_the_sea"],["饵钓","lure"],["忠诚","loyalty"],["穿刺","impaling"],["激流","riptide"],["引雷","channeling"],
+ ["多重射击","multishot"],["穿透","piercing"],["快速装填","quick_charge"]
+];
+const EFFECTS = [
+ ["速度","speed"],["缓慢","slowness"],["急迫","haste"],["挖掘疲劳","mining_fatigue"],["力量","strength"],
+ ["瞬间治疗","instant_health"],["瞬间伤害","instant_damage"],["跳跃提升","jump_boost"],["反胃","nausea"],
+ ["生命恢复","regeneration"],["抗性提升","resistance"],["防火","fire_resistance"],["水下呼吸","water_breathing"],
+ ["隐身","invisibility"],["夜视","night_vision"],["饥饿","hunger"],["虚弱","weakness"],["中毒","poison"],["凋零","wither"],
+ ["生命提升","health_boost"],["幸运","luck"],["潮涌能量","conduit_power"],["缓降","slow_falling"],
+ ["不祥之兆","bad_omen"],["村庄英雄","hero_of_the_village"],["黑暗","darkness"]
+];
+const TARGETS=[["@s","自己"],["@p","最近的玩家"],["@a","所有玩家"],["@r","随机玩家"]];
+const opt = arr => arr.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+const dlOpts = arr => arr.map(([l,v])=>`<option value="${v}">${l}</option>`).join("");
+document.getElementById("dl-items").innerHTML = dlOpts(ITEMS);
+document.getElementById("dl-entities").innerHTML = dlOpts(ENTITIES);
+document.getElementById("dl-blocks").innerHTML = dlOpts(BLOCKS);
+
+/* ============ 功能定义 ============ */
+const COMMANDS = [
+{
+ id:"give", name:"给物品", desc:"获得任意物品，可加附魔、自定义名字和说明",
+ fields:[
+  {id:"target",label:"给谁",type:"select",options:TARGETS},
+  {id:"item",label:"物品",type:"text",list:"dl-items",placeholder:"点右侧箭头选择，或手动输入物品ID",value:"diamond_sword"},
+  {id:"count",label:"数量",type:"number",value:1,min:1,max:64},
+  {id:"name",label:"自定义名字（可不填）",type:"text",placeholder:"例：神器·圣剑"},
+  {id:"lore",label:"物品说明（每行一条，可不填）",type:"textarea",placeholder:"例：一刀999\n新手勿碰"},
+  {id:"enchants",label:"附魔（可加多个）",type:"enchants"},
+  {id:"unbreakable",label:"无法破坏（耐久无限）",type:"check"}
+ ],
+ build(v){
+  if(currentVersion.f==="be"){
+    return `give ${v.target} minecraft:${v.item||"stone"} ${v.count||1}`;
+  }
+  let nbt=[],disp=[];
+  if(v.name) disp.push(`Name:'{"text":"${v.name}"}'`);
+  if(v.lore){const ls=v.lore.split("\n").filter(s=>s.trim());if(ls.length)disp.push(`Lore:[${ls.map(s=>`{"text":"${s.trim()}"}`).join(",")}]`);}
+  if(disp.length) nbt.push(`display:{${disp.join(",")}}`);
+  if(v.enchants.length) nbt.push(`Enchantments:[${v.enchants.map(e=>`{id:"minecraft:${e.id}",lvl:${e.lvl}}`).join(",")}]`);
+  if(v.unbreakable) nbt.push(`Unbreakable:1b`);
+  const n=nbt.length?`{${nbt.join(",")}}`:"";
+  if(currentVersion.syntax==="old"){
+    return `give ${v.target} ${v.item||"stone"} ${v.count||1}${n?` ${n}`:""}`;
+  }
+  return `give ${v.target} ${v.item||"stone"}${n} ${v.count||1}`;
+ }
+},
+{
+ id:"summon", name:"召唤生物", desc:"在指定位置召唤怪物或动物，可命名、设无敌",
+ fields:[
+  {id:"entity",label:"生物",type:"text",list:"dl-entities",placeholder:"选择或输入生物ID",value:"zombie"},
+  {id:"pos",label:"出现位置",type:"text",value:"~ ~ ~",hint:"~ ~ ~ = 你当前位置；~ ~1 ~ = 头顶一格"},
+  {id:"name",label:"生物名字（可不填）",type:"text",placeholder:"例：保镖僵尸"},
+  {id:"invuln",label:"无敌（打不死）",type:"check"},
+  {id:"persist",label:"永久存在（不会自动消失）",type:"check"}
+ ],
+ build(v){
+  if(currentVersion.f==="be"){
+    let s=`summon minecraft:${v.entity||"zombie"} ${v.pos||"~ ~ ~"}`;
+    if(v.name) s+=` "${v.name}"`;
+    return s;
+  }
+  let n=[];
+  if(v.name) n.push(`CustomName:'{"text":"${v.name}"}'`);
+  if(v.invuln) n.push(`Invulnerable:1b`);
+  if(v.persist) n.push(`PersistenceRequired:1b`);
+  const ns=n.length?` {${n.join(",")}}`:"";
+  return `summon ${v.entity||"zombie"} ${v.pos||"~ ~ ~"}${ns}`;
+ }
+},
+{
+ id:"setblock", name:"放方块", desc:"在某个位置放置一个方块，X/Y/Z 分开填",
+ fields:[
+  {id:"x",label:"X 坐标（左右）",type:"text",value:"~",hint:"~ = 当前位置；~5 = 往东5格"},
+  {id:"y",label:"Y 坐标（高度）",type:"text",value:"~",hint:"~1 = 头顶；~-1 = 脚下"},
+  {id:"z",label:"Z 坐标（前后）",type:"text",value:"~",hint:"~5 = 往南5格"},
+  {id:"block",label:"方块（中文选择）",type:"select",options:BLOCKS.map(([l,v])=>[v,l])},
+  {id:"blockCustom",label:"手动输入方块ID（可选，留空用上面选的）",type:"text",placeholder:"例：minecraft:gold_block"},
+  {id:"mode",label:"放置方式",type:"select",options:[["replace","替换：直接覆盖原有方块"],["keep","保留：只在空位放"],["destroy","破坏：放新方块并让原方块掉落"]]}
+ ],
+ build(v){
+  const bid=(currentVersion.f==="be"?"minecraft:":"")+(v.blockCustom||v.block);
+  return `setblock ${v.x} ${v.y} ${v.z} ${bid} ${v.mode}`;
+}
+},
+{
+ id:"fill", name:"填充区域", desc:"用一种方块填满一大片区域（选空气=快速清空），起点终点分开填",
+ fields:[
+  {id:"x1",label:"起点 X 坐标",type:"text",value:"~"},
+  {id:"y1",label:"起点 Y 坐标",type:"text",value:"~"},
+  {id:"z1",label:"起点 Z 坐标",type:"text",value:"~"},
+  {id:"x2",label:"终点 X 坐标",type:"text",value:"~10"},
+  {id:"y2",label:"终点 Y 坐标",type:"text",value:"~5"},
+  {id:"z2",label:"终点 Z 坐标",type:"text",value:"~10"},
+  {id:"block",label:"填充方块（中文选择）",type:"select",options:BLOCKS.map(([l,v])=>[v,l])},
+  {id:"blockCustom",label:"手动输入方块ID（可选，留空用上面选的）",type:"text",placeholder:"例：minecraft:gold_block"},
+  {id:"mode",label:"填充方式",type:"select",options:[["replace","替换：全部填满"],["outline","框：只填最外层（空心）"],["hollow","壳：外层+内部清空"],["keep","保留：只填空位"],["destroy","破坏：原方块掉落"]]}
+ ],
+ build(v){
+  const bid=(currentVersion.f==="be"?"minecraft:":"")+(v.blockCustom||v.block);
+  return `fill ${v.x1} ${v.y1} ${v.z1} ${v.x2} ${v.y2} ${v.z2} ${bid} ${v.mode}`;
+}
+},
+{
+ id:"tp", name:"传送", desc:"把自己或别人传送到指定坐标",
+ fields:[
+  {id:"target",label:"传送谁",type:"select",options:TARGETS},
+  {id:"x",label:"X 坐标",type:"text",value:"~10"},
+  {id:"y",label:"Y 坐标（高度）",type:"text",value:"~"},
+  {id:"z",label:"Z 坐标",type:"text",value:"~"},
+  {id:"note",label:"",type:"raw",html:`<div class="hint" style="margin:0">~ 表示相对当前位置，例如 X 填 ~100 表示向东100格；也可以直接填数字坐标，按 F3 可查看坐标</div>`}
+ ],
+ build(v){return `tp ${v.target} ${v.x} ${v.y} ${v.z}`;}
+},
+{
+ id:"effect", name:"药水效果", desc:"给自己或玩家加buff/debuff，也能清除效果",
+ fields:[
+  {id:"mode",label:"操作",type:"select",options:[["give","添加效果"],["clear","清除全部效果"]]},
+  {id:"target",label:"给谁",type:"select",options:TARGETS},
+  {id:"effect",label:"效果",type:"select",options:EFFECTS},
+  {id:"seconds",label:"持续时间（秒）",type:"number",value:60,min:1,max:1000000},
+  {id:"level",label:"效果等级（1=普通，2=二级，最高255）",type:"number",value:1,min:1,max:255},
+  {id:"hide",label:"隐藏粒子（别人看不到）",type:"check"}
+ ],
+ build(v){
+  const be=currentVersion.f==="be";
+  const old=currentVersion.syntax==="old";
+  if(v.mode==="clear"){
+    return old ? `effect ${v.target} clear` : `effect clear ${v.target}`;
+  }
+  if(be||old){
+    return `effect ${v.target} minecraft:${v.effect} ${v.seconds||60} ${Math.max(0,(v.level||1)-1)} ${v.hide?"true":"false"}`;
+  }
+  return `effect give ${v.target} minecraft:${v.effect} ${v.seconds||60} ${Math.max(0,(v.level||1)-1)} ${v.hide?"true":"false"}`;
+ }
+},
+{
+ id:"enchant", name:"手持附魔", desc:"给手里拿的物品直接附魔（物品必须拿在手上）",
+ fields:[
+  {id:"target",label:"给谁",type:"select",options:TARGETS},
+  {id:"ench",label:"附魔",type:"select",options:ENCHS},
+  {id:"lvl",label:"等级",type:"number",value:1,min:1,max:255}
+ ],
+ build(v){return `enchant ${v.target} ${v.ench} ${v.lvl||1}`;}
+},
+{
+ id:"time", name:"时间", desc:"把世界改成白天或黑夜",
+ fields:[
+  {id:"when",label:"时间",type:"select",options:[["day","白天"],["noon","正午"],["night","夜晚"],["midnight","午夜"]]}
+ ],
+ build(v){
+  if(currentVersion.f==="je"&&currentVersion.syntax==="old"&&(v.when==="noon"||v.when==="midnight")){
+    return `time set ${v.when==="noon"?"day":"night"}`;
+  }
+  return `time set ${v.when}`;
+}
+},
+{
+ id:"weather", name:"天气", desc:"改成晴天、下雨或雷暴",
+ fields:[
+  {id:"type",label:"天气",type:"select",options:[["clear","晴天"],["rain","下雨"],["thunder","雷暴"]]},
+  {id:"dur",label:"持续时间（秒）",type:"number",value:60,min:1,max:1000000}
+ ],
+ build(v){return `weather ${v.type} ${v.dur||60}`;}
+},
+{
+ id:"gamerule", name:"游戏规则", desc:"死亡不掉落、防爆等常用开关，可同时勾选多个",
+ fields:[
+  {id:"rules",label:"开启以下规则（勾选后生成）",type:"multicheck",options:[
+    ["keepInventory true","死亡不掉落（物品和经验保留）"],
+    ["mobGriefing false","防爆 / 怪物不破坏方块（苦力怕、末影人等）"],
+    ["doDaylightCycle false","时间停止（昼夜不再变化）"],
+    ["doMobSpawning false","怪物不再自然生成"],
+    ["doWeatherCycle false","天气固定不变"],
+    ["doFireTick false","火焰不再蔓延"],
+    ["naturalRegeneration false","关闭自然回血（饱食度不再回血）"],
+    ["doInsomnia false","幻翼不再出现"]
+  ]}
+ ],
+ build(v){
+  if(!v.rules.length) return null;
+  return v.rules.map(r=>`gamerule ${r}`);
+ }
+},
+{
+ id:"title", name:"屏幕标题", desc:"在玩家屏幕中间显示大字标题",
+ fields:[
+  {id:"target",label:"给谁看",type:"select",options:TARGETS},
+  {id:"main",label:"主标题文字",type:"text",placeholder:"例：欢迎来到服务器"},
+  {id:"color",label:"主标题颜色",type:"select",options:[["yellow","黄色"],["gold","金色"],["green","绿色"],["aqua","青色"],["red","红色"],["blue","蓝色"],["white","白色"],["light_purple","紫色"]]},
+  {id:"sub",label:"副标题（可不填）",type:"text",placeholder:"例：祝你玩得开心"}
+ ],
+ build(v){
+  if(!v.main) return null;
+  const be=currentVersion.f==="be";
+  const old=currentVersion.syntax==="old";
+  if(be||old){
+    const out=[`title ${v.target} title ${v.main}`];
+    if(v.sub) out.push(`title ${v.target} subtitle ${v.sub}`);
+    return out;
+  }
+  const out=[`title ${v.target} title {"text":"${v.main}","bold":true,"color":"${v.color}"}`];
+  if(v.sub) out.push(`title ${v.target} subtitle {"text":"${v.sub}","color":"gray"}`);
+  return out;
+ }
+},
+{
+ id:"difficulty", name:"难度", desc:"切换游戏难度",
+ fields:[
+  {id:"level",label:"难度",type:"select",options:[["peaceful","和平（不刷怪、不掉饥饿）"],["easy","简单"],["normal","普通"],["hard","困难"]]}
+ ],
+ build(v){return `difficulty ${v.level}`;}
+}
+];
+
+/* ============ 版本选择 ============ */
+const VERSIONS = [
+ {id:"je-121",f:"je",label:"Java 1.21（最新）",syntax:"new"},
+ {id:"je-120",f:"je",label:"Java 1.20",syntax:"new"},
+ {id:"je-119",f:"je",label:"Java 1.19",syntax:"new"},
+ {id:"je-118",f:"je",label:"Java 1.18",syntax:"new"},
+ {id:"je-116",f:"je",label:"Java 1.16–1.17",syntax:"new"},
+ {id:"je-113",f:"je",label:"Java 1.13–1.15",syntax:"new"},
+ {id:"je-112",f:"je",label:"Java 1.12 及更早",syntax:"old"},
+ {id:"be-121",f:"be",label:"基岩 1.21（最新）",syntax:"be"},
+ {id:"be-120",f:"be",label:"基岩 1.20",syntax:"be"},
+ {id:"be-119",f:"be",label:"基岩 1.19",syntax:"be"},
+ {id:"be-118",f:"be",label:"基岩 1.18 及更早",syntax:"be"}
+];
+let currentVersion = VERSIONS[0];
+const verFamilySel=document.getElementById("verFamily");
+const verVersionSel=document.getElementById("verVersion");
+function fillVersions(){
+  const list=VERSIONS.filter(x=>x.f===verFamilySel.value);
+  verVersionSel.innerHTML=list.map(x=>`<option value="${x.id}">${x.label}</option>`).join("");
+  currentVersion=list[0];
+  document.getElementById("verLabel").textContent=`${currentVersion.f==="je"?"Java":"基岩"} ${currentVersion.label.replace(/^.*? /,"")}`;
+}
+verFamilySel.onchange=fillVersions;
+verVersionSel.onchange=()=>{
+  currentVersion=VERSIONS.find(x=>x.id===verVersionSel.value);
+  document.getElementById("verLabel").textContent=`${currentVersion.f==="je"?"Java":"基岩"} ${currentVersion.label.replace(/^.*? /,"")}`;
+};
+fillVersions();
+
+/* ============ 渲染 ============ */
+let currentId="give";
+const navEl=document.getElementById("nav");
+const formCard=document.getElementById("formCard");
+
+COMMANDS.forEach((c,i)=>{
+  const b=document.createElement("button");
+  b.className="nav-btn";b.dataset.id=c.id;
+  b.innerHTML=`<span class="n">${String(i+1).padStart(2,"0")}</span>${c.name}`;
+  b.onclick=()=>{currentId=c.id;render();};
+  navEl.appendChild(b);
+});
+
+function fieldHTML(f){
+  let inner="";
+  if(f.type==="raw") return `<div class="field">${f.html}</div>`;
+  const label=f.label?`<label>${f.label}${f.hint?`<span class="hint">${f.hint}</span>`:""}</label>`:"";
+  if(f.type==="select") inner=`<select data-fid="${f.id}">${f.options.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select>`;
+  else if(f.type==="number") inner=`<input type="number" data-fid="${f.id}" value="${f.value??""}" ${f.min!=null?`min="${f.min}"`:""} ${f.max!=null?`max="${f.max}"`:""}>`;
+  else if(f.type==="textarea") inner=`<textarea data-fid="${f.id}" placeholder="${f.placeholder||""}">${f.value??""}</textarea>`;
+  else if(f.type==="check"){
+    return `<div class="field"><label class="check-field"><input type="checkbox" data-fid="${f.id}"><span>${f.label}</span></label></div>`;
+  }
+  else if(f.type==="multicheck"){
+    inner=f.options.map(([v,l])=>`<label class="check-field"><input type="checkbox" data-fid="${f.id}" value="${v}"><span>${l}</span></label>`).join("");
+    return `<div class="field">${label}${inner}</div>`;
+  }
+  else if(f.type==="enchants"){
+    inner=`<div id="enchBox"></div><button type="button" class="mini-btn" id="addEnch" style="width:100%">＋ 添加一条附魔</button>`;
+  }
+  else inner=`<input type="text" data-fid="${f.id}" value="${f.value??""}" placeholder="${f.placeholder||""}" ${f.list?`list="${f.list}"`:""}>`;
+  return `<div class="field">${label}${inner}</div>`;
+}
+
+function render(){
+  const c=COMMANDS.find(x=>x.id===currentId);
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.id===currentId));
+  formCard.innerHTML=`
+    <h2><span class="tag">/${c.id}</span>${c.name}</h2>
+    <div class="desc">${c.desc}</div>
+    <form id="cmdForm" autocomplete="off">${c.fields.map(fieldHTML).join("")}</form>
+    <div class="actions"><button class="big-btn gen" id="genBtn">生成指令</button></div>`;
+  if(document.getElementById("enchBox")){
+    const add=()=>{
+      const row=document.createElement("div");
+      row.className="ench-row";
+      row.innerHTML=`<select class="e-id">${opt(ENCHS)}</select>
+        <input class="e-lvl" type="number" value="1" min="1" max="255">
+        <button type="button" class="mini-btn red">删</button>`;
+      row.querySelector(".red").onclick=()=>row.remove();
+      document.getElementById("enchBox").appendChild(row);
+    };
+    document.getElementById("addEnch").onclick=add; add();
+  }
+  document.getElementById("genBtn").onclick=generate;
+  document.getElementById("result").innerHTML='<span class="empty">// 填好内容后点「生成指令」</span>';
+  lastOutput=[];
+}
+
+/* ============ 收集与生成 ============ */
+let lastOutput=[];
+function collect(c){
+  const v={};
+  c.fields.forEach(f=>{
+    if(f.type==="check"){
+      const el=formCard.querySelector(`[data-fid="${f.id}"]`);
+      v[f.id]=el?el.checked:false;
+    }else if(f.type==="multicheck"){
+      v[f.id]=[...formCard.querySelectorAll(`[data-fid="${f.id}"]:checked`)].map(x=>x.value);
+    }else if(f.type==="enchants"){
+      v.enchants=[...document.querySelectorAll(".ench-row")].map(r=>({id:r.querySelector(".e-id").value,lvl:r.querySelector(".e-lvl").value||1}));
+    }else if(f.type==="raw"){
+      v[f.id]="";
+    }else{
+      const el=formCard.querySelector(`[data-fid="${f.id}"]`);
+      v[f.id]=el?el.value.trim():"";
+    }
+  });
+  return v;
+}
+
+function generate(){
+  const c=COMMANDS.find(x=>x.id===currentId);
+  const v=collect(c);
+  let res;
+  try{res=c.build(v);}catch(e){res=null;}
+  if(res===null||res===undefined||(Array.isArray(res)&&!res.length)){
+    showToast("还有必填项没填，检查一下");
+    return;
+  }
+  const ver=currentVersion;
+  let note="";
+  if(ver.f==="be"){
+    if(currentId==="give"&&(v.name||v.lore||(v.enchants&&v.enchants.length)||v.unbreakable)) note="基岩版 give 不支持改名/附魔/无法破坏，已忽略";
+    if(currentId==="summon"&&(v.invuln||v.persist)) note="基岩版召唤不支持无敌/持久，已忽略";
+  }
+  if(ver.f==="je"&&ver.syntax==="old"&&currentId==="time"&&(v.when==="noon"||v.when==="midnight")) note="1.12 及更早不支持正午/午夜，已改为白天/夜晚";
+  lastOutput=Array.isArray(res)?res:[res];
+  document.getElementById("result").textContent=lastOutput.map(x=>"/"+x).join("\n");
+  showToast(note||"已生成，点复制即可");
+}
+
+document.getElementById("backBtn").onclick=()=>{
+  if(history.length>1){history.back();}
+  else{window.scrollTo({top:0,behavior:"smooth"});showToast("已在页面顶部");}
+};
+
+document.getElementById("copyBtn").onclick=async()=>{
+  if(!lastOutput.length){showToast("请先生成指令");return;}
+  const text=lastOutput.map(x=>"/"+x).join("\n");
+  try{await navigator.clipboard.writeText(text);showToast("复制成功，去游戏里粘贴");}
+  catch(e){
+    const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();
+    document.execCommand("copy");ta.remove();showToast("复制成功，去游戏里粘贴");
+  }
+};
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1800);
+}
+render();
+</script>
+</body>
+</html>
